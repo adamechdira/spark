@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مغامرة الساحرات والسحرة</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Tahoma", Arial, sans-serif;
+      background: linear-gradient(135deg, #1f1147, #432874);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.8rem;
+      color: #ffd66b;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .question {
+      font-size: 1.2rem;
+      margin: 20px 0;
+      line-height: 1.7;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #ffffff;
+      color: #2b1a59;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.75;
+      cursor: default;
+    }
+
+    .result {
+      margin-top: 16px;
+      min-height: 24px;
+      color: #b6ffb0;
+    }
+
+    .final {
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .restart {
+      margin-top: 16px;
+      background: #ffd66b;
+      color: #2f205f;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>🧙‍♀️ مغامرة الساحرات والسحرة</h1>
+    <div class="meta">
+      <span id="stage">المرحلة 1 من 5</span>
+      <span id="score">النقاط: 0</span>
+    </div>
+    <div id="content">
+      <p class="question" id="question"></p>
+      <div class="choices" id="choices"></div>
+      <p class="result" id="result"></p>
+    </div>
+  </main>
+
+  <script>
+    const stages = [
+      {
+        question: "في أكاديمية السحر، ما أول تعويذة تستخدمها لإضاءة القاعة المظلمة؟",
+        answers: [
+          { text: "لوموس", correct: true, feedback: "إضاءة ممتازة!" },
+          { text: "إكسبيلليارموس", correct: false, feedback: "هذه للتجريد من السلاح." },
+          { text: "فينيتي", correct: false, feedback: "هذه لإنهاء التعويذات." }
+        ]
+      },
+      {
+        question: "تنين صغير غاضب يسد الطريق، ماذا تفعل؟",
+        answers: [
+          { text: "تهدئه بتعويذة السلام", correct: true, feedback: "أحسنت، القوة ليست الحل دائمًا." },
+          { text: "الهجوم المباشر", correct: false, feedback: "خيار خطير جدًا!" },
+          { text: "الهرب وترك الفريق", correct: false, feedback: "الفريق يحتاجك." }
+        ]
+      },
+      {
+        question: "تحتاج عبور نهر مسحور، أي أداة تختار؟",
+        answers: [
+          { text: "مكنسة طيران", correct: true, feedback: "عبور سريع وآمن!" },
+          { text: "كتاب الجرعات", correct: false, feedback: "الكتاب مفيد لكن ليس للعبور الآن." },
+          { text: "عباءة الاختفاء", correct: false, feedback: "لن تمنعك من السقوط في الماء." }
+        ]
+      },
+      {
+        question: "وجدت صندوقًا مقفلاً برمز قديم، ما أفضل حل؟",
+        answers: [
+          { text: "فك الرمز أولًا", correct: true, feedback: "ذكاء ساحر حقيقي!" },
+          { text: "كسره بعصا السحر", correct: false, feedback: "قد تتلف ما بداخله." },
+          { text: "تجاهله نهائيًا", correct: false, feedback: "قد يحتوي على مفتاح المرحلة الأخيرة." }
+        ]
+      },
+      {
+        question: "في المواجهة الأخيرة مع الساحر الظلامي، كيف تنتصر؟",
+        answers: [
+          { text: "تعويذة حماية مع تعاون الفريق", correct: true, feedback: "النصر بالتعاون والحكمة!" },
+          { text: "مبارزة منفردة دون خطة", correct: false, feedback: "الشجاعة وحدها لا تكفي." },
+          { text: "انتظار شخص آخر ينقذك", correct: false, feedback: "أنت بطل القصة!" }
+        ]
+      }
+    ];
+
+    let currentStage = 0;
+    let score = 0;
+
+    const stageEl = document.getElementById("stage");
+    const scoreEl = document.getElementById("score");
+    let questionEl = document.getElementById("question");
+    let choicesEl = document.getElementById("choices");
+    let resultEl = document.getElementById("result");
+    const contentEl = document.getElementById("content");
+
+    function renderStage() {
+      const stage = stages[currentStage];
+      stageEl.textContent = `المرحلة ${currentStage + 1} من ${stages.length}`;
+      scoreEl.textContent = `النقاط: ${score}`;
+      questionEl.textContent = stage.question;
+      resultEl.textContent = "";
+      choicesEl.innerHTML = "";
+
+      stage.answers.forEach((answer) => {
+        const button = document.createElement("button");
+        button.textContent = answer.text;
+        button.addEventListener("click", () => handleAnswer(answer));
+        choicesEl.appendChild(button);
+      });
+    }
+
+    function handleAnswer(answer) {
+      const buttons = choicesEl.querySelectorAll("button");
+      buttons.forEach((btn) => (btn.disabled = true));
+
+      if (answer.correct) {
+        score++;
+      }
+
+      scoreEl.textContent = `النقاط: ${score}`;
+      resultEl.textContent = answer.feedback;
+
+      setTimeout(() => {
+        currentStage++;
+        if (currentStage < stages.length) {
+          renderStage();
+        } else {
+          showFinal();
+        }
+      }, 900);
+    }
+
+    function showFinal() {
+      const rank =
+        score === 5
+          ? "🏆 ساحر أسطوري!"
+          : score >= 3
+          ? "✨ ساحر ماهر!"
+          : "🔮 متدرب واعد، حاول مرة أخرى!";
+
+      stageEl.textContent = "انتهت المغامرة";
+      contentEl.innerHTML = `
+        <div class="final">
+          <h2>أحسنت!</h2>
+          <p>لقد أنهيت 5 مراحل في عالم السحر.</p>
+          <p><strong>نتيجتك: ${score} / ${stages.length}</strong></p>
+          <p>${rank}</p>
+          <button class="restart" onclick="restartGame()">إعادة اللعب</button>
+        </div>
+      `;
+    }
+
+    function restartGame() {
+      currentStage = 0;
+      score = 0;
+      contentEl.innerHTML = `
+        <p class="question" id="question"></p>
+        <div class="choices" id="choices"></div>
+        <p class="result" id="result"></p>
+      `;
+
+      questionEl = document.getElementById("question");
+      choicesEl = document.getElementById("choices");
+      resultEl = document.getElementById("result");
+
+      renderStage();
+    }
+
+    renderStage();
+  </script>
+</body>
+</html>
